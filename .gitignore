@@ -34,3 +34,12 @@ vignettes/*.pdf
 
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
+packrat/lib*/
+.Rproj.user
+
+# don't store my api's on github
+my_apis.R
+
+# dont put R packages up on git
+packrat/lib*/
+packrat/src*/
