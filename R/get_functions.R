@@ -68,7 +68,7 @@ scrape_times <- function(one_list = NULL){
                      start = y[[which(names(y) =="timeInterval")]][[1]],
                      end = y[[which(names(y) =="timeInterval")]][[2]],
                      stringsAsFactors = FALSE
-                   )})) %>% tibble::as.tibble()
+                   )})) %>% tibble::as_tibble()
 }
 
 
