@@ -114,8 +114,8 @@ get_all <- function(){
   # lock up keyring
   keyring::keyring_lock("clockify")
   # join by ids and then remove id columns
-  dplyr::left_join(times, projects, by = "project_id") %>%
-    dplyr::left_join(., clients, by = "client_id") %>%
+  dplyr::left_join(projects, clients, by = "client_id") %>%
+    dplyr::left_join(., times, by = "project_id") %>%
     dplyr::left_join(., tags, by = "tags_id") %>%
     dplyr::select(., -dplyr::ends_with("id")) %>%
     return
