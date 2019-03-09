@@ -11,7 +11,9 @@ get_clients <- function(){
   #
   client_content <- httr::content(client_response) %>%
     dplyr::bind_rows() %>%
-    dplyr::arrange(name)
+    dplyr::arrange(name) %>%
+    dplyr::select(., -dplyr::starts_with("workspace"))
+  colnames(client_content) <- c("client_id", "client_name")
   return(client_content)
 }
 
@@ -65,3 +67,49 @@ get_projects <- function(){
   return(project_content)
 }
 
+get_tags <- function(){
+  tags_response <- httr::VERB(
+    verb = "GET",
+    url = paste0("https://api.clockify.me/api/workspaces/",
+                 keyring::key_get("clockify_wsid"),
+                 "/tags"),
+    httr::add_headers(`X-Api-Key` = keyring::key_get("clockify_pw")),
+    encode = "json"
+  )
+  #
+  tags_content <- httr::content(tags_response) %>%
+    dplyr::bind_rows() %>%
+    dplyr::arrange(name) %>%
+    dplyr::select(., -dplyr::starts_with("workspace"))
+  colnames(tags_content) <- c("tags_id", "tags_name")
+  return(tags_content)
+
+}
+
+get_all <- function(join = TRUE){
+  cat(cli::rule(center = " * COLLECTING DATA * ", col = "purple"),"\n")
+  # projects
+  cat(crayon::cyan( cli::symbol$bullet," Projects: "))
+  projects <- get_projects()
+  check_tibble(projects)
+  #clients
+  cat(crayon::cyan( cli::symbol$bullet," Clients:  "))
+  clients <- get_clients()
+  check_tibble(clients)
+  #tags
+  cat(crayon::cyan( cli::symbol$bullet," Tags:     "))
+  tags <- get_tags()
+  check_tibble(tags)
+  # times
+  cat(crayon::cyan(cli::symbol$bullet, " Times:    "))
+  times <- get_times()
+  check_tibble(times)
+
+
+  dplyr::left_join(times, projects, by = "project_id") %>%
+    dplyr::left_join(., clients, by = "client_id") %>%
+    dplyr::left_join(., tags, by = "tags_id") %>%
+    dplyr::select(., -dplyr::ends_with("id")) %>%
+    return
+
+}

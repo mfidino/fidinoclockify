@@ -45,7 +45,7 @@ check_clients <- function(clients = NULL){
     }
 }
 
-check_times(times = NULL){
+check_times <- function(times = NULL){
   if(!file.exists("./Data/fidino_times.csv")){
     write.csv(times,"./Data/fidino_times.csv", row.names = FALSE)
   }
@@ -67,6 +67,12 @@ check_times(times = NULL){
                   sep = ",")
     }
     }
-  }
+}
 
+check_tibble <- function(x){
+  if(tibble::is_tibble(x) & nrow(x) > 0) {
+    cat(crayon::green( cli::symbol$tick), "collected" )
+  } else {
+    cat(crayon::red( cli::symbol$cross), "not collected")
+  }
 }
