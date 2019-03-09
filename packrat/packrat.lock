@@ -91,6 +91,12 @@ Hash: e43f51c457f58ca4af860198160578ec
 Requires: R6, assertthat, filelock, getPass, openssl, rappdirs, sodium,
     yaml
 
+Package: lubridate
+Source: CRAN
+Version: 1.7.4
+Hash: a7c783782f0e50be33b31f859c11333e
+Requires: Rcpp, stringr
+
 Package: magrittr
 Source: CRAN
 Version: 1.5
@@ -153,6 +159,17 @@ Package: sodium
 Source: CRAN
 Version: 1.1
 Hash: fefcc4853ec7eedb939924477189da52
+
+Package: stringi
+Source: CRAN
+Version: 1.3.1
+Hash: 2618ed9608445399e7c431b0e80bfbfd
+
+Package: stringr
+Source: CRAN
+Version: 1.4.0
+Hash: 67da32dbb2a7a16f2ef124336358e54a
+Requires: glue, magrittr, stringi
 
 Package: sys
 Source: CRAN

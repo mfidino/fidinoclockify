@@ -23,7 +23,7 @@ check_clients <- function(clients = NULL){
         clients_csv <- read.csv("./Data/fidino_clients.csv",
                                 stringsAsFactors = FALSE) %>%
           tibble::as_tibble()
-    } # close add new records: !identical(clients_csv, clients)
+    }
 
     # check to see if a name needs to be updated. This
     #  will occur if a client name get's updated on
@@ -41,6 +41,6 @@ check_clients <- function(clients = NULL){
         #save
         write.csv(clients_csv, "./Data/fidino_clients.csv",
                   row.names = FALSE)
-      } # close update records: any(tmp$name.x != tmp$name.y)
-    } # close if file exists = TRUE
+      }
+    }
   }
