@@ -36,16 +36,19 @@ by_project <- first_pass %>%
 
 # the last time I have interacted with a specific project
 
-days_since <- data %>% dplyr::group_by(project_name) %>%
+week_since <- data %>% dplyr::group_by(project_name) %>%
   dplyr::filter( is_research) %>%
   dplyr::filter( start == max(start)) %>%
   dplyr::select( start, project_name) %>%
-  dplyr::summarise(last_touch = Sys.Date() - as.Date(start)) %>%
-  dplyr::arrange(last_touch) %>%
+  dplyr::summarise(last_touch = difftime(Sys.Date(), as.Date(start),
+                                         units = "weeks") %>%
+                     ceiling) %>%
+  dplyr::arrange(dplyr::desc(last_touch)) %>%
   dplyr::left_join(., data, by = "project_name") %>%
   dplyr::select(project_name, client_name, last_touch) %>%
   dplyr::distinct()
 
+plot(c(1:11) ~ week_since$last_touch, bty = 'l')
 
 hm <- data %>% dplyr::group_by(week) %>%
   dplyr::mutate(prop_time = duration / sum(as.numeric(duration)))
