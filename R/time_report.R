@@ -1,5 +1,6 @@
 
-library(httr)
+keyring::keyring_unlock("clockify")
+require('magrittr')
 
   clock <- httr::VERB(
     verb = "GET",
@@ -8,19 +9,6 @@ library(httr)
     httr::add_headers(`X-Api-Key` = .api$clockify$api),
     encode = "json"
   )
-
-  GET /workspaces/{workspaceId}/clients
-  hm <- httr::VERB(
-    verb = "GET",
-    url = paste0("https://api.clockify.me/api/workspaces/",.api$clockify$workspaceID,
-                 "/clients"),
-    httr::add_headers(`X-Api-Key` = .api$clockify$api),
-    encode = "json"
-  )
-
-
-
-  #/workspaces/{workspaceId}/timeEntries/
 
 
 

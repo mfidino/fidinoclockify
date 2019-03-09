@@ -37,9 +37,10 @@ rsconnect/
 packrat/lib*/
 .Rproj.user
 
-# don't store my api's on github
-my_apis.R
 
-# dont put R packages up on git
+# don't put R packages up on git
 packrat/lib*/
 packrat/src*/
+
+# don't put my data on git
+data*/
