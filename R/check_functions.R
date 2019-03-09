@@ -43,4 +43,30 @@ check_clients <- function(clients = NULL){
                   row.names = FALSE)
       }
     }
+}
+
+check_times(times = NULL){
+  if(!file.exists("./Data/fidino_times.csv")){
+    write.csv(times,"./Data/fidino_times.csv", row.names = FALSE)
   }
+  # if it does exist, check to see if any new times need to be added.
+  if(file.exists("./Data/fidino_times.csv")){
+    times_csv <-read.csv("./Data/fidino_times.csv",
+                           stringsAsFactors = FALSE) %>%
+      tibble::as_tibble()
+    # check to see if they are not identical
+    #  if not, add new records and append to file.
+    if(!identical(times_csv, times)){
+      times_to_add <- dplyr::anti_join(times ,times_csv,"id")
+      cat(crayon::cyan("Adding new records to times data."))
+      write.table(times_to_add,
+                  "./Data/fidino_times.csv",
+                  append = TRUE,
+                  row.names = FALSE,
+                  col.names = FALSE,
+                  sep = ",")
+    }
+    }
+  }
+
+}
