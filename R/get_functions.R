@@ -1,6 +1,6 @@
 
 get_clients <- function(){
-  my_response <- httr::VERB(
+  client_response <- httr::VERB(
     verb = "GET",
     url = paste0("https://api.clockify.me/api/workspaces/",
                  keyring::key_get("clockify_wsid"),
@@ -9,10 +9,10 @@ get_clients <- function(){
     encode = "json"
   )
   #
-  my_content <- httr::content(client_response) %>%
+  client_content <- httr::content(client_response) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(name)
-  return(my_content)
+  return(client_content)
 }
 
 # get the times
@@ -50,25 +50,18 @@ get_times <- function(check_first = FALSE){
 
 }
 
-# this goes through the nested list and returns
-scrape_times <- function(one_list = NULL){
-  do.call(rbind,
-          lapply(unname(one_list),
-                 function(y){
-                   data.frame(
-                     description = ifelse(!is.null(y[[which(names(y) == "description")]]),
-                                          y[[which(names(y) == "description")]],
-                                          NA),
-                     tags = ifelse(!is.null(y[[which(names(y) == "tags")]]),
-                                   sapply(y[[which(names(y) == "tags")]],
-                                          function(x){x[[1]]}),
-                                   NA),
-                     project = y[[which(names(y) == "projectId")]],
-                     time_id = y[[which(names(y)=="id")]],
-                     start = y[[which(names(y) =="timeInterval")]][[1]],
-                     end = y[[which(names(y) =="timeInterval")]][[2]],
-                     stringsAsFactors = FALSE
-                   )})) %>% tibble::as_tibble()
+get_projects <- function(){
+  project_response <- httr::VERB(
+    verb = "GET",
+    url = paste0("https://api.clockify.me/api/workspaces/",
+                 keyring::key_get("clockify_wsid"),
+                 "/projects/"),
+    httr::add_headers(`X-Api-Key` = keyring::key_get("clockify_pw")),
+    encode = "json"
+  )
+  #
+  project_content <- httr::content(project_response) %>%
+    scrape_projects
+  return(project_content)
 }
-
 
