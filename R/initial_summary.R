@@ -53,4 +53,3 @@ plot(c(1:11) ~ week_since$last_touch, bty = 'l')
 hm <- data %>% dplyr::group_by(week) %>%
   dplyr::mutate(prop_time = duration / sum(as.numeric(duration)))
 
-query <- function(x)
