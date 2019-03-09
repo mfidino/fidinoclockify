@@ -86,7 +86,14 @@ get_tags <- function(){
 
 }
 
-get_all <- function(join = TRUE){
+get_all <- function(){
+  if(keyring::keyring_is_locked("clockify")) {
+    keyring::keyring_unlock("clockify")
+  }
+
+  # wrapper function to pull all of the tables from
+  #  clockify and then join them together. Adds some
+  #  reporting to the command line as well.
   cat(cli::rule(center = " * COLLECTING DATA * ", col = "purple"),"\n")
   # projects
   cat(crayon::cyan( cli::symbol$bullet," Projects: "))
@@ -104,12 +111,12 @@ get_all <- function(join = TRUE){
   cat(crayon::cyan(cli::symbol$bullet, " Times:    "))
   times <- get_times()
   check_tibble(times)
-
-
+  # lock up keyring
+  keyring::keyring_lock("clockify")
+  # join by ids and then remove id columns
   dplyr::left_join(times, projects, by = "project_id") %>%
     dplyr::left_join(., clients, by = "client_id") %>%
     dplyr::left_join(., tags, by = "tags_id") %>%
     dplyr::select(., -dplyr::ends_with("id")) %>%
     return
-
 }

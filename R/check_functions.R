@@ -71,8 +71,8 @@ check_times <- function(times = NULL){
 
 check_tibble <- function(x){
   if(tibble::is_tibble(x) & nrow(x) > 0) {
-    cat(crayon::green( cli::symbol$tick), "collected" )
+    cat(crayon::green( cli::symbol$tick), "\n")
   } else {
-    cat(crayon::red( cli::symbol$cross), "not collected")
+    cat(crayon::red( cli::symbol$cross), "\n")
   }
 }
