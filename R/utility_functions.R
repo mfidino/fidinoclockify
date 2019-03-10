@@ -21,3 +21,25 @@ meeting_days <- function( first_meeting = "2018-12-24", by = "biweekly"){
     dplyr::filter(complete.cases(.)) %>%
     return(.)
 }
+
+# just using for now while I work on the reporting stuff
+open_graph = function( width=7 , height=7 , mag=1.0 , ... ) {
+  if ( .Platform$OS.type != "windows" ) { # Mac OS, Linux
+    tryInfo = try( X11( width=width*mag , height=height*mag , type="cairo" ,
+                        ... ) )
+    if ( class(tryInfo)=="try-error" ) {
+      lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
+      graphics.off()
+      X11( width=width*mag , height=height*mag , type="cairo" , ... )
+    }
+  } else { # Windows OS
+    tryInfo = try( windows( width=width*mag , height=height*mag , ... ) )
+    if ( class(tryInfo)=="try-error" ) {
+      lineInput = readline("WARNING: Previous graphics windows will be closed because of too many open windows.\nTO CONTINUE, PRESS <ENTER> IN R CONSOLE.\n")
+      graphics.off()
+      windows( width=width*mag , height=height*mag , ... )
+    }
+  }
+}
+
+
