@@ -32,7 +32,10 @@ report_summary <- function(x = NULL, next_meeting = NULL){
   by_project <- first_pass %>%
     dplyr::group_by(project_name) %>%
     dplyr::summarise(prop_time = sum(prop_time)) %>%
-    dplyr::arrange(dplyr::desc(prop_time))
+    dplyr::arrange(dplyr::desc(prop_time)) %>%
+    dplyr::left_join(., x, by = "project_name") %>%
+    dplyr::select(project_name, client_name, prop_time) %>%
+    dplyr::distinct()
   check_tibble(by_project)
   cat(crayon::cyan( cli::symbol$bullet," Time spent on each client:    "))
   by_client <- first_pass %>%
@@ -62,7 +65,7 @@ report_summary <- function(x = NULL, next_meeting = NULL){
 }
 
 plot_projects <- function(x, filename = "project_plot.tiff"){
-  if(!all(colnames(x) %in% c("project_name", "prop_time"))){
+  if(!all(colnames(x) %in% c("project_name", "client_name", "prop_time"))){
     err <- paste0("\nWrong table supplied to ",
                   crayon::red("plot_projects()","."))
     stop(err)
@@ -75,10 +78,10 @@ plot_projects <- function(x, filename = "project_plot.tiff"){
     xmax <- 0.5
   } else if(max(x$prop_time) > 0.5){
     xmax <- 0.8
-  } else if(max(x$prop_time) < 0.75){
+  } else if(max(x$prop_time) > 0.75){
     xmax <- 1
   }
-  suppressWarnings(plot(1~1, ylim = c(1, nrow(x)), xlim = c(0, xmax), bty = 'l',
+  suppressWarnings(plot(1~1, ylim = c(0.5, nrow(x)+0.5), xlim = c(0, xmax), bty = 'l',
                         xaxt="n", type="n", yaxt="n", xlab="",ylab=""))
 
   axis(side = 1, at = seq(0, xmax, 0.1),
@@ -94,7 +97,8 @@ plot_projects <- function(x, filename = "project_plot.tiff"){
   mtext(text = seq(0, xmax, go_by), side = 1,
         at = seq(0, xmax, go_by), line = 0.6, cex = 1.2)
 
-  palette <- colorRampPalette(colors=c("#bcbddc", "#4a1486"))
+
+  palette <- colorRampPalette(colors=c("#4a1486","#bcbddc"))
   cols <- palette(dplyr::n_distinct(x$project_name))
 
   mtext(text = x$project_name, side = 2, las = 1,
@@ -102,8 +106,132 @@ plot_projects <- function(x, filename = "project_plot.tiff"){
   mtext(text = "Proportion of time spent\non projects", 1,
         at = xmax / 2, line = 4.20, cex = 1.75)
 
-  points(y = rev(seq(1, nrow(x))), x = x$prop_time, pch = 21,
-         cex = 2, bg = rev(cols))
-  dev.off()
+  rect(xleft = rep(-0.02, nrow(x)),
+       xright = x$prop_time,
+       ybottom = rev(seq(1,nrow(x))) -0.25,
+       ytop = rev(seq(1,nrow(x))) +0.25,
+       col = cols, lwd = 1.4)
+
+  invisible(dev.off())
+
+}
+
+
+plot_clients <- function(x, filename = "client_plot.tiff"){
+  if(!all(colnames(x) %in% c("client_name", "prop_time"))){
+    err <- paste0("\nWrong table supplied to ",
+                  crayon::red("plot_clients()","."))
+    stop(err)
+  }
+  tiff(paste0("./images/",filename), height = 7, width = 7,
+       units = "in", res = 400, compression = "lzw")
+  par(mar =c(6,12,0.5,1))
+
+  if(max(x$prop_time) < 0.5){
+    xmax <- 0.5
+  } else if(max(x$prop_time) > 0.5){
+    xmax <- 0.8
+  } else if(max(x$prop_time) < 0.75){
+    xmax <- 1
+  }
+  suppressWarnings(plot(1~1, ylim = c(0.5, nrow(x)+0.5), xlim = c(0, xmax), bty = 'l',
+                        xaxt="n", type="n", yaxt="n", xlab="",ylab=""))
+
+  axis(side = 1, at = seq(0, xmax, 0.1),
+       tck = -0.025,labels = NA)
+  axis(side = 1, at = seq(0, xmax, 0.05),
+       tck = -0.025/2,labels = NA)
+  axis(side = 2, at = seq(1, nrow(x)),
+       tck = -0.025, labels = NA)
+
+  abline(h = 1:nrow(x), col = "gray90")
+  abline(v=seq(0,xmax,0.1), col = "gray90")
+  go_by <- ifelse(xmax == 1, 0.2, 0.1)
+  mtext(text = seq(0, xmax, go_by), side = 1,
+        at = seq(0, xmax, go_by), line = 0.6, cex = 1.2)
+
+  cols <- RColorBrewer::brewer.pal(dplyr::n_distinct(x$client_name),
+                                   "Dark2")
+
+  mtext(text = x$client_name, side = 2, las = 1,
+        at = rev(seq(1, nrow(x))), line = .9, cex = 1.2)
+  mtext(text = "Proportion of time spent\nper client", 1,
+        at = xmax / 2, line = 4.20, cex = 1.75)
+  rect(xleft = rep(-0.02, dplyr::n_distinct(x$client_name)),
+       xright = x$prop_time,
+       ybottom = rev(seq(1,nrow(x))) -0.25,
+       ytop = rev(seq(1,nrow(x))) +0.25,
+       col = cols, lwd = 1.4)
+
+  invisible(dev.off())
+
+}
+
+plot_weeks <- function(x, filename = "weeks_since.tiff"){
+  if(!all(colnames(x) %in% c("project_name","client_name", "last_touch"))){
+    err <- paste0("\nWrong table supplied to ",
+                  crayon::red("plot_weeks()","."))
+    stop(err)
+  }
+  tiff(paste0("./images/",filename), height = 7, width = 7,
+       units = "in", res = 400, compression = "lzw")
+  par(mar =c(6,12,0.5,1))
+
+  xmax <- as.numeric(ceiling(max(x$last_touch)/5)*5)
+  if(xmax < 20){
+    xse <- 3
+  } else if(xmax > 20){
+    xse <- 5
+  } else if(xmax > 50){
+    xse <- 10
+  }
+  suppressWarnings(plot(1~1, ylim = c(0.5, nrow(x)+0.5), xlim = c(0, xmax), bty = 'l',
+                        xaxt="n", type="n", yaxt="n", xlab="",ylab=""))
+
+  axis(side = 1, at = seq(0, xmax, xse),
+       tck = -0.025,labels = NA)
+  axis(side = 1, at = seq(0, xmax, xse/2),
+       tck = -0.025/2,labels = NA)
+  axis(side = 2, at = seq(1, nrow(x)),
+       tck = -0.025, labels = NA)
+
+  abline(h = 1:nrow(x), col = "gray90")
+  abline(v=seq(0,xmax,xse), col = "gray90")
+  mtext(text = seq(0, xmax, xse), side = 1,
+        at = seq(0, xmax, xse), line = 0.6, cex = 1.2)
+
+
+  col_vec <- rep(1, nrow(x))
+  col_vec[which(x$client_name != "My own research")] <- 2
+  cols <- c("#4a1486","#bcbddc")[col_vec]
+
+  mtext(text = x$project_name, side = 2, las = 1,
+        at = rev(seq(1, nrow(x))), line = .9, cex = 1.2)
+  mtext(text = "Weeks since project\n visited", 1,
+        at = xmax / 2, line = 4.20, cex = 1.75)
+  rect(xleft = rep(-0.02, nrow(x)),
+       xright = as.numeric(x$last_touch),
+       ybottom = rev(seq(1,nrow(x))) -0.25,
+       ytop = rev(seq(1,nrow(x))) +0.25,
+       col = cols, lwd = 1.4)
+
+  legend("bottomright", legend = c("My research", "Others"),
+         bty = "n",fill = c("#4a1486","#bcbddc"), cex = 1.5)
+
+  invisible(dev.off())
+}
+
+plot_all <- function(x = NULL){
+  cat(cli::rule(center = " * GENERATING FIGURES * ", col = "purple"),"\n")
+  cat(crayon::cyan( cli::symbol$bullet," Time spent per client:      "))
+  plot_clients(x$client)
+  cat(crayon::green( cli::symbol$tick), "\n")
+  cat(crayon::cyan( cli::symbol$bullet," Time spent per project:     "))
+  plot_projects(x$project)
+  cat(crayon::green( cli::symbol$tick), "\n")
+  cat(crayon::cyan( cli::symbol$bullet," Time since project visited: "))
+  plot_weeks(x$weeks_since)
+  cat(crayon::green( cli::symbol$tick), "\n")
+
 
 }
