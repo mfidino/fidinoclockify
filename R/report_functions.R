@@ -34,14 +34,17 @@ report_summary <- function(x = NULL, next_meeting = NULL){
     dplyr::summarise(prop_time = sum(prop_time)) %>%
     dplyr::arrange(dplyr::desc(prop_time)) %>%
     dplyr::left_join(., x, by = "project_name") %>%
-    dplyr::select(project_name, client_name, prop_time) %>%
+    dplyr::select(project_name, client_category, prop_time) %>%
     dplyr::distinct()
   check_tibble(by_project)
   cat(crayon::cyan( cli::symbol$bullet," Time spent on each client:    "))
   by_client <- first_pass %>%
     dplyr::group_by(client_name) %>%
     dplyr::summarise(prop_time = sum(prop_time)) %>%
-    dplyr::arrange(dplyr::desc(prop_time))
+    dplyr::arrange(dplyr::desc(prop_time))%>%
+    dplyr::left_join(., x, by = "client_name") %>%
+    dplyr::select(client_name, client_category, prop_time) %>%
+    dplyr::distinct()
   check_tibble(by_client)
   cat(crayon::cyan( cli::symbol$bullet," Weeks since research visited: "))
   weeks_since <- x %>% dplyr::group_by(project_name) %>%
@@ -97,9 +100,7 @@ plot_projects <- function(x, filename = "project_plot.tiff"){
   mtext(text = seq(0, xmax, go_by), side = 1,
         at = seq(0, xmax, go_by), line = 0.6, cex = 1.2)
 
-
-  palette <- colorRampPalette(colors=c("#4a1486","#bcbddc"))
-  cols <- palette(dplyr::n_distinct(x$project_name))
+  cols <- plot_cols()[as.numeric(factor(x$client_category))]
 
   mtext(text = x$project_name, side = 2, las = 1,
         at = rev(seq(1, nrow(x))), line = .9, cex = 1.2)
@@ -108,9 +109,13 @@ plot_projects <- function(x, filename = "project_plot.tiff"){
 
   rect(xleft = rep(-0.02, nrow(x)),
        xright = x$prop_time,
-       ybottom = rev(seq(1,nrow(x))) -0.25,
-       ytop = rev(seq(1,nrow(x))) +0.25,
+       ybottom = rev(seq(1,nrow(x))) -0.3,
+       ytop = rev(seq(1,nrow(x))) +0.3,
        col = cols, lwd = 1.4)
+
+  legend("bottomright", legend = c("C&S department", "External",
+                                   "UWI", "UWIN"),bty = "n",
+         fill = plot_cols(), cex = 1.3)
 
   invisible(dev.off())
 
@@ -118,7 +123,7 @@ plot_projects <- function(x, filename = "project_plot.tiff"){
 
 
 plot_clients <- function(x, filename = "client_plot.tiff"){
-  if(!all(colnames(x) %in% c("client_name", "prop_time"))){
+  if(!all(colnames(x) %in% c("client_name","client_category", "prop_time"))){
     err <- paste0("\nWrong table supplied to ",
                   crayon::red("plot_clients()","."))
     stop(err)
@@ -150,8 +155,7 @@ plot_clients <- function(x, filename = "client_plot.tiff"){
   mtext(text = seq(0, xmax, go_by), side = 1,
         at = seq(0, xmax, go_by), line = 0.6, cex = 1.2)
 
-  cols <- RColorBrewer::brewer.pal(dplyr::n_distinct(x$client_name),
-                                   "Dark2")
+  cols <- plot_cols()[as.numeric(factor(x$client_category))]
 
   mtext(text = x$client_name, side = 2, las = 1,
         at = rev(seq(1, nrow(x))), line = .9, cex = 1.2)
@@ -162,6 +166,10 @@ plot_clients <- function(x, filename = "client_plot.tiff"){
        ybottom = rev(seq(1,nrow(x))) -0.25,
        ytop = rev(seq(1,nrow(x))) +0.25,
        col = cols, lwd = 1.4)
+
+  legend("bottomright", legend = c("C&S department", "External",
+                                   "UWI", "UWIN"),bty = "n",
+         fill = plot_cols(), cex = 1.5)
 
   invisible(dev.off())
 

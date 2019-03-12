@@ -42,4 +42,8 @@ open_graph = function( width=7 , height=7 , mag=1.0 , ... ) {
   }
 }
 
+plot_cols <- function(){
+  return(c('#1A8998', '#7D20A6','#EFF726', '#F98B26'))
+}
+
 
