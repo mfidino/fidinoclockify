@@ -11,7 +11,7 @@ script:
 deploy:
   provider: pages
 skip_cleanup: true
-github_token: $GITHUB_PAT
+github_token: $78c34c578a584d4f0534858be705ebecc84fe755
 on:
   branch: source
 target_branch: master
