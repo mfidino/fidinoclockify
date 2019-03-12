@@ -12,8 +12,9 @@ get_clients <- function(){
   client_content <- httr::content(client_response) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(name) %>%
-    dplyr::select(., -dplyr::starts_with("workspace"))
-  colnames(client_content) <- c("client_id", "client_name")
+    dplyr::select(., -dplyr::starts_with("workspace")) %>%
+    dplyr::rename(client_id = id, client_name = name)
+
   return(client_content)
 }
 
@@ -80,8 +81,9 @@ get_tags <- function(){
   tags_content <- httr::content(tags_response) %>%
     dplyr::bind_rows() %>%
     dplyr::arrange(name) %>%
-    dplyr::select(., -dplyr::starts_with("workspace"))
-  colnames(tags_content) <- c("tags_id", "tags_name")
+    dplyr::select(., -dplyr::starts_with("workspace")) %>%
+    dplyr::rename(tags_id = id, tags_name = name)
+
   return(tags_content)
 
 }
@@ -113,10 +115,20 @@ get_all <- function(){
   check_tibble(times)
   # lock up keyring
   keyring::keyring_lock("clockify")
+  return(list(projects = projects,
+              clients = clients,
+              times = times,
+              tags = tags))
+}
+
+join_data <- function(data = NULL){
+  cat(cli::rule(center = " * JOINING DATA * ", col = "purple"),"\n")
+  cat(crayon::cyan( cli::symbol$bullet," Status: "))
   # join by ids and then remove id columns
-  dplyr::left_join(projects, clients, by = "client_id") %>%
-    dplyr::left_join(., times, by = "project_id") %>%
-    dplyr::left_join(., tags, by = "tags_id") %>%
-    dplyr::select(., -dplyr::ends_with("id")) %>%
-    return
+  to_return <- dplyr::left_join(data$projects, data$clients, by = "client_id") %>%
+    dplyr::left_join(., data$times, by = "project_id") %>%
+    dplyr::left_join(., data$tags, by = "tags_id") %>%
+    dplyr::select(., -dplyr::ends_with("id"))
+  check_tibble(to_return)
+  return(to_return)
 }

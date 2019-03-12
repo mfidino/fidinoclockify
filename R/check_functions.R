@@ -1,49 +1,54 @@
+
 check_clients <- function(clients = NULL){
   # check if the file exists, create if not.
   if(!file.exists("./Data/fidino_clients.csv")){
-    write.csv(clients,"./Data/fidino_clients.csv", row.names = FALSE)
+    # add a client_category
+    readr::write_csv(clients,"./Data/fidino_clients.csv")
   }
   # if it does exist, check to see if any new clients need to be added.
   if(file.exists("./Data/fidino_clients.csv")){
-    clients_csv <-read.csv("./Data/fidino_clients.csv",
-                          stringsAsFactors = FALSE) %>%
-      tibble::as_tibble()
-    # check to see if they are not identical
-    #  if not, add new records and append to file.
-    if(!identical(clients_csv, clients)){
-      clients_to_add <- dplyr::anti_join(clients, clients_csv,"id")
-      cat(crayon::cyan("Adding new records to clients data."))
-        write.table(clients_to_add,
-                    "./Data/fidino_clients.csv",
-                    append = TRUE,
-                    row.names = FALSE,
-                    col.names = FALSE,
-                    sep = ",")
-        # check the csv back out after adding new records
-        clients_csv <- read.csv("./Data/fidino_clients.csv",
-                                stringsAsFactors = FALSE) %>%
-          tibble::as_tibble()
+    clients_csv <- readr::read_csv("./Data/fidino_clients.csv",
+                                   col_types = list(
+                                     client_id = readr::col_character(),
+                                     client_name = readr::col_character()
+                                   ))
+    if(!'client_category' %in% colnames(clients_csv) ){
+      clients_csv$client_category <- NA
+    }
+    # update the client names
+    clients_csv <- clients_csv %>%
+      dplyr::select(client_id, client_category) %>%
+      dplyr::left_join(., clients, by = 'client_id') %>%
+      dplyr::select(client_id, client_name, client_category)
+    # fill NAs
+    if(any(is.na(clients_csv$client_category))){
+      cat('\n\t',crayon::cyan(cli::symbol$pointer),
+          crayon::cyan('There are clients that need to be categorized'))
+      to_fill <- which(is.na(clients_csv$client_category))
+      tmp_names <- rep(NA, length(to_fill))
+      for(i in 1:length(to_fill)){
+
+        cat('\n', crayon::magenta('client:'),
+ crayon::underline( clients_csv$client_name[to_fill[i]]))
+        cat('\n      1: UWI',
+            '\n      2: UWIN',
+            '\n      3: C&S Department',
+            '\n      4: External')
+        my_input <- readline(prompt="  Input: ")
+        tmp_names[i] <- switch(my_input,
+                               '1' = 'UWI',
+                               '2' = 'UWIN',
+                               '3' = 'C&S department',
+                               '4' = 'External')
+      }
+      clients_csv$client_category[to_fill] <- tmp_names
     }
 
-    # check to see if a name needs to be updated. This
-    #  will occur if a client name get's updated on
-    #  clockify.
-    tmp <- dplyr::left_join(clients,
-                            clients_csv,
-                            by = "id")
-    # will return TRUE if names are not identical
-      if(any(tmp$name.x != tmp$name.y)) {
-        # which one needs to be updated from clients to csv
-        to_update <- which(tmp$name.x != tmp$name.y)
-        cat(crayon::yellow("Updating names in clients data."))
-        # update
-        clients_csv$name[to_update] <- clients$name[to_update]
-        #save
-        write.csv(clients_csv, "./Data/fidino_clients.csv",
-                  row.names = FALSE)
-      }
+      readr::write_csv(clients_csv, "./Data/fidino_clients.csv")
+  }
+  return(clients_csv)
     }
-}
+
 
 check_times <- function(times = NULL){
   if(!file.exists("./Data/fidino_times.csv")){
@@ -75,4 +80,17 @@ check_tibble <- function(x){
   } else {
     cat(crayon::red( cli::symbol$cross), "\n")
   }
+}
+
+check_all <- function(data = NULL, stop_on_empty = TRUE){
+  cat(cli::rule(center = " * CHECKING DATA * ", col = "purple"),"\n")
+  cat(crayon::cyan( cli::symbol$bullet," Projects: "),
+      "No checks currently made.\n")
+  cat(crayon::cyan( cli::symbol$bullet," Clients: "),
+      " Checking if client categories need to be added...\n")
+  data$clients <- check_clients(data$clients)
+  cat("\t", crayon::green('     Clients check complete\n'))
+  cat(crayon::cyan( cli::symbol$bullet," Times: "),
+      "   No checks currently made.\n")
+  return(data)
 }
